@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>現代 POS 系統</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navigation Header -->
+  <nav class="nav-bar glass-panel no-print">
+    <div class="nav-brand">現代 POS 系統</div>
+    <div class="nav-links">
+      <button class="nav-btn active" data-tab="order">點餐系統</button>
+      <button class="nav-btn" data-tab="tables">桌況管理</button>
+      <button class="nav-btn" data-tab="history">歷史帳單</button>
+      <button class="nav-btn" data-tab="settings">後台設定</button>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <!-- View 1: Ordering -->
+    <div id="order-view" class="view-content active no-print">
+      <div id="app">
+        <!-- Left Pane: Menu -->
+        <main class="menu-pane">
+          <header class="menu-header">
+            <h1 id="order-title-display">點餐系統 (外帶)</h1>
+            <div class="category-tabs" id="category-tabs">
+              <button class="tab active" data-category="noodles">麵類</button>
+              <button class="tab" data-category="sides">小菜</button>
+              <button class="tab" data-category="soups">湯類</button>
+            </div>
+          </header>
+          
+          <div class="menu-grid" id="menu-grid">
+            <!-- Menu items will be injected here by JS -->
+          </div>
+        </main>
+
+        <!-- Right Pane: Order Summary -->
+        <aside class="order-pane glass-panel">
+          <div class="order-header">
+            <h2>訂單明細</h2>
+            <div class="order-meta">
+              <label class="meta-item">
+                <span>外帶</span>
+                <input type="checkbox" id="takeout-checkbox">
+                <span class="custom-checkbox"></span>
+              </label>
+              <label class="meta-item">
+                <span>桌號</span>
+                <input type="text" id="table-number" placeholder="輸入桌號" class="input-glass">
+              </label>
+            </div>
+          </div>
+
+          <div class="order-items" id="order-items">
+            <!-- Order items will be injected here -->
+            <div class="empty-state">購物車是空的</div>
+          </div>
+
+          <div class="order-footer">
+            <div class="total-row">
+              <span>合計</span>
+              <span class="total-amount" id="total-amount">$0</span>
+            </div>
+            <button class="btn-checkout" id="btn-checkout">結帳</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- View 2: Tables -->
+    <div id="tables-view" class="view-content hidden no-print">
+      <div class="tables-container">
+        <h2>桌況狀態管理</h2>
+        <div class="tables-grid" id="tables-grid">
+          <!-- Will be dynamically generated (1-12 tables) by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- View 3: History -->
+    <div id="history-view" class="view-content hidden no-print">
+      <div class="history-container">
+        <h2>營收與訂單記錄</h2>
+        <div class="stats-container">
+          <div class="stat-card glass-panel">
+            <h3>今日營業額</h3>
+            <p id="stat-revenue">$0</p>
+          </div>
+          <div class="stat-card glass-panel">
+            <h3>總結帳訂單</h3>
+            <p id="stat-orders">0</p>
+          </div>
+          <div class="stat-card glass-panel">
+            <h3>平均客單價</h3>
+            <p id="stat-avg-order">$0</p>
+          </div>
+        </div>
+        
+        <div class="history-list-panel glass-panel">
+          <div class="history-list-header">
+            <h3>歷史訂單記錄</h3>
+            <button class="btn-cancel" id="btn-clear-history">清除所有紀錄</button>
+          </div>
+          <div class="table-responsive">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>訂單單號</th>
+                  <th>結帳時間</th>
+                  <th>類型</th>
+                  <th>桌號</th>
+                  <th>明細</th>
+                  <th>金額</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 4: Settings -->
+    <div id="settings-view" class="view-content hidden no-print">
+      <div class="settings-container">
+        <h2>後台菜單管理</h2>
+        <div class="settings-layout">
+          <!-- Left Panel: Form -->
+          <div class="settings-form-panel glass-panel">
+            <h3 id="settings-form-title">新增品項</h3>
+            <form id="menu-item-form">
+              <input type="hidden" id="edit-item-id">
+              <div class="form-group">
+                <label>分類</label>
+                <select id="item-category" class="input-glass w-full" required>
+                  <option value="noodles">麵類</option>
+                  <option value="sides">小菜</option>
+                  <option value="soups">湯類</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>商品名稱</label>
+                <input type="text" id="item-name" class="input-glass w-full" required placeholder="例如：榨菜肉絲麵">
+              </div>
+              
+              <!-- Regular price for side/soup -->
+              <div class="form-group" id="price-standard-group">
+                <label>單價 ($)</label>
+                <input type="number" id="item-price" class="input-glass w-full" min="0" placeholder="例如：50">
+              </div>
+              
+              <!-- Split price for noodles -->
+              <div class="form-group hidden" id="price-noodle-group">
+                <div class="price-split">
+                  <div>
+                    <label>小碗價格 ($)</label>
+                    <input type="number" id="item-price-small" class="input-glass w-full" min="0" placeholder="例如：50">
+                  </div>
+                  <div>
+                    <label>大碗價格 ($)</label>
+                    <input type="number" id="item-price-large" class="input-glass w-full" min="0" placeholder="例如：70">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="btn-cancel" id="btn-reset-form">重設</button>
+                <button type="submit" class="btn-confirm" id="btn-save-item">儲存商品</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Panel: List -->
+          <div class="settings-list-panel glass-panel">
+            <div class="settings-list-header">
+              <h3>菜單品項管理</h3>
+              <div class="settings-tabs" id="settings-category-tabs">
+                <button class="settings-tab active" data-category="noodles">麵類</button>
+                <button class="settings-tab" data-category="sides">小菜</button>
+                <button class="settings-tab" data-category="soups">湯類</button>
+              </div>
+            </div>
+            <div class="settings-items-list" id="settings-items-list">
+              <!-- Dynamically populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Noodle Customize Modal -->
+  <div class="modal-overlay hidden" id="noodle-modal">
+    <div class="modal-content glass-panel">
+      <h3 id="modal-noodle-name">麵類名稱</h3>
+      
+      <div class="modal-section">
+        <h4>大小</h4>
+        <div class="toggle-group" id="size-group">
+          <button class="toggle-btn active" data-value="small">小 (<span id="price-small"></span>)</button>
+          <button class="toggle-btn" data-value="large">大 (<span id="price-large"></span>)</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4>做法</h4>
+        <div class="toggle-group" id="style-group">
+          <button class="toggle-btn active" data-value="soup">湯</button>
+          <button class="toggle-btn" data-value="dry">乾</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4>口感</h4>
+        <div class="toggle-group" id="texture-group">
+          <button class="toggle-btn active" data-value="適中">適中</button>
+          <button class="toggle-btn" data-value="軟">軟</button>
+          <button class="toggle-btn" data-value="硬">硬</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4>辣度</h4>
+        <div class="toggle-group" id="spicy-group">
+          <button class="toggle-btn active" data-value="不辣">不辣</button>
+          <button class="toggle-btn" data-value="微辣">微辣</button>
+          <button class="toggle-btn" data-value="中辣">中辣</button>
+          <button class="toggle-btn" data-value="大辣">大辣</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4>加料選項</h4>
+        <div class="checkbox-group">
+          <label class="meta-item">
+            <span>加滷蛋 (+$10)</span>
+            <input type="checkbox" id="add-egg-checkbox">
+            <span class="custom-checkbox"></span>
+          </label>
+          <label class="meta-item">
+            <span>加貢丸 (+$15)</span>
+            <input type="checkbox" id="add-meatball-checkbox">
+            <span class="custom-checkbox"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-cancel-noodle">取消</button>
+        <button class="btn-confirm" id="btn-confirm-noodle">加入訂單</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Item Modal -->
+  <div class="modal-overlay hidden" id="other-modal">
+    <div class="modal-content glass-panel">
+      <h3>自訂項目</h3>
+      
+      <div class="modal-section">
+        <label>
+          <span>名稱</span>
+          <input type="text" id="custom-name" placeholder="輸入項目名稱" class="input-glass w-full">
+        </label>
+      </div>
+
+      <div class="modal-section">
+        <label>
+          <span>金額</span>
+          <input type="number" id="custom-price" placeholder="輸入金額" min="0" class="input-glass w-full">
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-cancel-other">取消</button>
+        <button class="btn-confirm" id="btn-confirm-other">加入訂單</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Print Modal -->
+  <div class="modal-overlay hidden" id="receipt-modal">
+    <div class="receipt-paper">
+      <div class="receipt-header">
+        <h2>點餐收據 (POS)</h2>
+        <p>歡迎再度光臨 / Thank You!</p>
+      </div>
+      <div class="receipt-divider">================================</div>
+      <div class="receipt-info">
+        <p>單號: <span id="receipt-id"></span></p>
+        <p>時間: <span id="receipt-time"></span></p>
+        <p>類型: <span id="receipt-type"></span></p>
+        <p>桌號: <span id="receipt-table"></span></p>
+      </div>
+      <div class="receipt-divider">--------------------------------</div>
+      <div class="receipt-items-table">
+        <div class="receipt-items-header">
+          <span>品項/規格</span>
+          <span>數量</span>
+          <span>小計</span>
+        </div>
+        <div class="receipt-divider-dotted">- - - - - - - - - - - - - - - -</div>
+        <div class="receipt-items" id="receipt-items-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="receipt-divider">================================</div>
+      <div class="receipt-total">
+        <span>合計</span>
+        <span id="receipt-total-amount">$0</span>
+      </div>
+      <div class="receipt-footer no-print">
+        <button class="btn-cancel" id="btn-close-receipt">關閉視窗</button>
+        <button class="btn-confirm" id="btn-print-receipt">列印收據</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
